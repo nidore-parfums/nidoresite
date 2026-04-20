@@ -51,16 +51,11 @@ function updateSearchOffset(){const h=document.querySelector('header');if(h)docu
 
 // Mede o painel no mobile para alinhar o botão com o dropdown aberto
 function updateSearchPanelMetrics(){
-  const shell=document.getElementById('searchShell'),wrap=shell?.querySelector('.search-panel-wrap'),panel=shell?.querySelector('.search-panel');
-  if(!shell||!wrap||!panel)return;
-  if(!window.matchMedia('(max-width: 900px)').matches){
-    shell.style.removeProperty('--search-panel-width');
-    shell.style.removeProperty('--search-panel-height');
-    return;
-  }
-  const panelWidth=Math.ceil(wrap.getBoundingClientRect().width||wrap.offsetWidth||0),panelHeight=Math.ceil(panel.scrollHeight||0);
+  const shell=document.getElementById('searchShell'),wrap=shell?.querySelector('.search-panel-wrap');
+  if(!shell||!wrap)return;
+  if(!window.matchMedia('(max-width: 900px)').matches){shell.style.removeProperty('--search-panel-width');return}
+  const panelWidth=Math.ceil(wrap.getBoundingClientRect().width||wrap.offsetWidth||0);
   if(panelWidth)shell.style.setProperty('--search-panel-width',`${panelWidth}px`);
-  if(panelHeight)shell.style.setProperty('--search-panel-height',`${panelHeight}px`);
 }
 
 // Sincroniza o visual do painel com o estado isSearchPanelOpen
@@ -120,6 +115,8 @@ function getOrderTotal(subtotal=getCartSubtotal()){return isPixPaymentSelected()
 function normalizeZip(v){return(v||'').replace(/\D/g,'').slice(0,8)}
 function isValidZip(v){return normalizeZip(v).length===8}
 const FORTALEZA_SHIPPING_FEE=10;
+const FREE_SHIPPING_UNITS=5;
+function isFreeShipping(){return getCartUnitsCount()>=FREE_SHIPPING_UNITS}
 function isFortalezaZip(v){const zip=normalizeZip(v);if(zip.length!==8)return false;const value=Number(zip);return value>=60000001&&value<=61599999}
 function getShippingInfo(v=''){if(!isValidZip(v))return{label:'R$ 10,00 em Fortaleza',meta:'Fortaleza: frete fixo de R$ 10,00. - Demais CEPs: frete a calcular no atendimento. - ENVIO EM 24H.',amount:null,isFortaleza:false,hasValidZip:false};if(isFortalezaZip(v))return{label:formatCurrency(FORTALEZA_SHIPPING_FEE),meta:'CEP de Fortaleza identificado. Frete fixo de R$ 10,00. ENVIO EM 24H.',amount:FORTALEZA_SHIPPING_FEE,isFortaleza:true,hasValidZip:true};return{label:'A calcular',meta:'CEP fora de Fortaleza. O frete será calculado no atendimento. ENVIO EM 24H.',amount:null,isFortaleza:false,hasValidZip:true}}
 function updateCheckoutShippingSummary(zipValue=''){const valueEl=document.getElementById('checkoutShippingValue'),metaEl=document.getElementById('checkoutShippingMeta');if(!valueEl||!metaEl)return;const shipping=getShippingInfo(zipValue);valueEl.textContent=shipping.label;metaEl.textContent=shipping.meta}
@@ -254,7 +251,17 @@ let _searchDebounceTimer=null;
 function debouncedRenderGrid(){clearTimeout(_searchDebounceTimer);_searchDebounceTimer=setTimeout(renderGrid,150);}
 
 // Sincroniza o carrinho com subtotal local, desconto Pix e frete informado no atendimento.
-function updateCartUI(){const sub=getCartSubtotal(),cartUnits=getCartUnitsCount(),pixDiscount=isPixPaymentSelected()?getPixDiscountAmount(sub):0,total=getOrderTotal(sub),shippingPolicy=getShippingInfo();document.querySelectorAll('[data-cart-count]').forEach(el=>el.textContent=cartUnits);document.getElementById('cartSubtotal').textContent=formatCurrency(sub);document.getElementById('cartShipping').textContent=shippingPolicy.label;document.getElementById('cartTotal').textContent=formatCurrency(total);document.getElementById('cartShippingNote').textContent=pixDiscount>0?`Desconto Pix aplicado: ${formatCurrency(pixDiscount)}. ${shippingPolicy.meta}`:shippingPolicy.meta;document.getElementById('whatsappBtn').disabled=cart.length===0;
+function updateCartUI(){const sub=getCartSubtotal(),cartUnits=getCartUnitsCount(),freeShip=isFreeShipping(),pixDiscount=isPixPaymentSelected()?getPixDiscountAmount(sub):0,total=getOrderTotal(sub),shippingPolicy=getShippingInfo();
+// Barra de progresso frete grátis
+const remaining=Math.max(0,FREE_SHIPPING_UNITS-cartUnits),pct=Math.min(100,(cartUnits/FREE_SHIPPING_UNITS)*100);
+const labelEl=document.getElementById('freeShippingLabel'),barEl=document.getElementById('freeShippingBar'),trackEl=document.getElementById('freeShippingTrack');
+if(labelEl){labelEl.textContent=freeShip?'FRETE GRÁTIS DESBLOQUEADO! 🎉':`Faltam ${remaining} decant${remaining!==1?'s':''} para frete grátis`;labelEl.classList.toggle('is-free',freeShip)}
+if(barEl){barEl.style.width=`${pct}%`;barEl.classList.toggle('is-free',freeShip)}
+if(trackEl)trackEl.setAttribute('aria-valuenow',String(cartUnits));
+// Exibição do frete
+const shippingLabel=freeShip?'Grátis':shippingPolicy.label;
+const shippingNote=freeShip?'ENVIO EM 24H.':(pixDiscount>0?`Desconto Pix aplicado: ${formatCurrency(pixDiscount)}. ${shippingPolicy.meta}`:shippingPolicy.meta);
+document.querySelectorAll('[data-cart-count]').forEach(el=>el.textContent=cartUnits);document.getElementById('cartSubtotal').textContent=formatCurrency(sub);document.getElementById('cartShipping').textContent=shippingLabel;document.getElementById('cartTotal').textContent=formatCurrency(total);document.getElementById('cartShippingNote').textContent=shippingNote;document.getElementById('whatsappBtn').disabled=cart.length===0;
 // FAB sempre visível quando há itens no carrinho
 const cartFab=document.querySelector('.cart-fab');const _show=cart.length>0||(cartFab?.classList.contains('is-visible')??false);if(cartFab)cartFab.classList.toggle('is-visible',_show);document.querySelectorAll('.whatsapp-fab,.instagram-fab').forEach(f=>f.classList.toggle('is-visible',_show));
 // Atualiza badge nos cards do grid
@@ -317,14 +324,17 @@ async function submitCheckout(event){
   if(isCardPaymentSelected()&&!cn){showToast('Informe se o cartao e Nubank para continuar.');return}
 
   // Monta a mensagem com frete fixo para Fortaleza e frete a calcular para os demais CEPs.
-  const shipping=getShippingInfo(zi.value),sub=getCartSubtotal(),pixDiscount=isPixPaymentSelected()?getPixDiscountAmount(sub):0,total=getOrderTotal(sub),totalWithShipping=shipping.amount===null?null:Number((total+shipping.amount).toFixed(2));
+  const freeShip=isFreeShipping(),baseShipping=getShippingInfo(zi.value),sub=getCartSubtotal(),pixDiscount=isPixPaymentSelected()?getPixDiscountAmount(sub):0,total=getOrderTotal(sub);
+  const shipping=freeShip?{label:'Grátis',amount:0,meta:'Frete grátis (5+ decants)'}:baseShipping;
+  const totalWithShipping=shipping.amount===null?null:Number((total+shipping.amount).toFixed(2));
   let msg=`*Nidore Parfums - Pedido*\n\n*Nome:* ${ni.value.trim()}\n*CPF:* ${ci.value.trim()}\n*Email:* ${ei.value.trim()}\n*CEP:* ${zi.value.trim()}\n*Endereco:* ${ai.value.trim()}\n*Pagamento:* ${pm}\n`;
   if(isCardPaymentSelected())msg+=`*Cartao Nubank:* ${cn}\n`;
   msg+=`\n*Itens:*\n`;
   cart.forEach(c=>{msg+=`- ${c.nome} (${c.ml}) x${c.qty} - R$ ${formatPrice(c.total)}\n`});
   msg+=`\n*Subtotal:* R$ ${formatPrice(sub)}\n`;
   if(pixDiscount>0)msg+=`*Desconto Pix (5%):* - R$ ${formatPrice(pixDiscount)}\n`;
-  if(shipping.amount!==null)msg+=`*Frete (Fortaleza):* R$ ${formatPrice(shipping.amount)}\n*Total com frete:* R$ ${formatPrice(totalWithShipping)}\n* Ola! Gostaria de finalizar este pedido para Fortaleza.`;
+  if(freeShip)msg+=`*Frete:* Grátis (pedido com ${getCartUnitsCount()} decants)\n*Total:* R$ ${formatPrice(total)}\n* Ola! Gostaria de finalizar este pedido com frete grátis.`;
+  else if(shipping.amount!==null)msg+=`*Frete (Fortaleza):* R$ ${formatPrice(shipping.amount)}\n*Total com frete:* R$ ${formatPrice(totalWithShipping)}\n* Ola! Gostaria de finalizar este pedido para Fortaleza.`;
   else msg+=`*Frete:* A calcular\n*Total parcial:* R$ ${formatPrice(total)}\n* Ola! Gostaria de finalizar este pedido e receber o calculo do frete para este CEP.`;
 
   // Abre o WhatsApp em nova aba

@@ -197,7 +197,7 @@ header{
 /* Arte decorativa presa ao canto inferior direito; o scroll do hero a empurra para fora. */
 .corner-right-art{
   position:fixed;
-  right:0;
+  left:0;
   bottom:0;
   width:min(400px,24vw);
   max-width:400px;
@@ -205,7 +205,7 @@ header{
   pointer-events:none;
   user-select:none;
   z-index:120;
-  transform:translate3d(calc(var(--collection-progress,0) * 108%),0,0);
+  transform:translate3d(calc(var(--collection-progress,0) * -108%),0,0);
   opacity:calc(1 - min(var(--collection-progress,0) * .82,1));
   transition:transform .52s var(--ease), opacity .28s var(--ease);
 }
@@ -730,6 +730,12 @@ body.search-results-mode .section-header{
 .ci-remove{background:none;border:none;color:var(--nude-light);cursor:pointer;font-family:var(--font-body);font-size:.63rem;font-weight:300;margin-top:.32rem;text-decoration:underline;transition:color .18s}
 .ci-remove:hover{color:#c0392b}
 .cart-empty{text-align:center;color:var(--nude-light);font-family:var(--font-brand);font-size:1rem;font-style:italic;padding:3rem 1rem}
+.cart-free-shipping{padding:.9rem 1.5rem .75rem;border-top:1px solid var(--border);background:var(--off-white)}
+.free-shipping-label{font-family:var(--font-body);font-size:.68rem;font-weight:300;color:var(--nude);margin-bottom:.5rem;line-height:1.4;text-align:center;transition:color .3s}
+.free-shipping-label.is-free{color:#1a8a40;font-weight:500}
+.free-shipping-track{height:5px;background:var(--mist-pale);border-radius:999px;overflow:hidden}
+.free-shipping-bar{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--petrol-mid),#1fbe5c);transition:width .45s var(--ease),background .4s}
+.free-shipping-bar.is-free{background:#1fbe5c}
 .cart-footer{padding:1.1rem 1.5rem;border-top:1px solid var(--border);background:var(--off-white)}
 .cart-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.42rem}
 .cart-row-label{font-family:var(--font-body);font-size:.58rem;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:var(--nude-light)}
@@ -851,7 +857,7 @@ body.search-results-mode .section-header{
     pointer-events:none;
     transition:max-height .32s var(--ease),opacity .24s var(--ease),transform .24s var(--ease);
   }
-  .search-shell.open .search-panel-wrap{max-height:var(--search-panel-height,360px);opacity:1;transform:translateY(0);pointer-events:auto}
+  .search-shell.open .search-panel-wrap{max-height:520px;opacity:1;transform:translateY(0);pointer-events:auto}
   .search-panel{padding:1rem .95rem 1.05rem;gap:.9rem}
   .search-bar{grid-template-columns:1fr}
   .search-bar input,
