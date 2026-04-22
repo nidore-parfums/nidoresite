@@ -46,9 +46,6 @@ function normalizeProduct(p){return{...p,genero:normalizeGender(p.genero)||infer
 // Ativa o chip de gênero e refaz o grid
 function setGenderFilter(v){activeGender=v;document.querySelectorAll('.chip').forEach(b=>b.classList.toggle('active',b.dataset.filter===v));renderGrid()}
 
-// Calcula a posição do painel de busca baseado na altura do header
-function updateSearchOffset(){const h=document.querySelector('header');if(h)document.documentElement.style.setProperty('--search-top',`${h.offsetHeight}px`)}
-
 // Mede o painel no mobile para alinhar o botão com o dropdown aberto
 function updateSearchPanelMetrics(){
   const shell=document.getElementById('searchShell'),wrap=shell?.querySelector('.search-panel-wrap');
@@ -567,8 +564,7 @@ async function init(){
     document.getElementById('grid').innerHTML='<div class="no-products">Não foi possível carregar os produtos. Tente recarregar a página.</div>';
   }
   populateFamilyFilter();
-  updateSearchOffset(); // calcula posiÇo do painel de busca
-  syncSearchPanel();    // sincroniza o estado visual
+  syncSearchPanel();
   renderGrid();         // renderiza os cards de produtos
   updateCartUI();       // inicializa o carrinho (vazio)
   updateCheckoutShippingSummary();
@@ -580,10 +576,8 @@ async function init(){
   if(_pSlug){const _idx=products.findIndex(p=>slugify(p.nome)===_pSlug);if(_idx>=0)openModal(_idx)}
 }
 
-// Recalcula posição do painel ao carregar e redimensionar
-window.addEventListener('load',updateSearchOffset);
 window.addEventListener('load',updateSearchPanelMetrics);
-window.addEventListener('resize',()=>{updateSearchOffset();updateSearchPanelMetrics();syncSearchPanel()});
+window.addEventListener('resize',()=>{updateSearchPanelMetrics();syncSearchPanel()});
 document.addEventListener('pointerdown',closeSearchPanelOnOutsideClick);
 window.addEventListener('popstate',()=>{const o=document.getElementById('productOverlay');if(o&&o.classList.contains('active')){o.classList.remove('active');document.body.style.overflow=''}});
 init();
