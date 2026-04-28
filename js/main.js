@@ -59,6 +59,23 @@ function updateSearchPanelMetrics(){
 function syncSearchPanel(){const s=document.getElementById('searchShell'),t=document.getElementById('searchToggle'),i=document.getElementById('searchToggleIcon');if(!s||!t||!i)return;updateSearchPanelMetrics();s.classList.toggle('open',isSearchPanelOpen);t.setAttribute('aria-expanded',String(isSearchPanelOpen))}
 function hasActiveCatalogFilters(){const q=normalizeText(document.getElementById('searchInput')?.value),fam=document.getElementById('familyFilter')?.value||'all',price=document.getElementById('priceFilter')?.value||'all';return Boolean(q)||fam!=='all'||price!=='all'||activeGender!=='todos'}
 function syncSearchResultsMode(){document.body.classList.toggle('search-results-mode',isSearchResultsMode)}
+
+function updateOgTags(product){
+  const slug=slugify(product.nome);
+  const base=window.location.origin+window.location.pathname.replace(/[^/]*$/,'');
+  const img=`${base}imagens/${slug}.jpg`;
+  const title=`${product.nome} — Nidore Parfums`;
+  const desc=`Decant original de ${product.nome}${product.marca?' – '+product.marca:''}. 100% autêntico.`;
+  const setMeta=(sel,val)=>{const el=document.querySelector(sel);if(el)el.setAttribute('content',val)};
+  document.title=title;
+  setMeta('meta[property="og:title"]',title);
+  setMeta('meta[property="og:description"]',desc);
+  setMeta('meta[property="og:image"]',img);
+  setMeta('meta[property="og:url"]',window.location.href);
+  setMeta('meta[name="twitter:title"]',title);
+  setMeta('meta[name="twitter:description"]',desc);
+  setMeta('meta[name="twitter:image"]',img);
+}
 function toggleSearchPanel(){isSearchPanelOpen=!isSearchPanelOpen;syncSearchPanel()}
 function closeSearchPanelOnOutsideClick(event){const searchShell=document.getElementById('searchShell');if(!isSearchPanelOpen||!searchShell||searchShell.contains(event.target))return;isSearchPanelOpen=false;syncSearchPanel()}
 function scrollToCatalogResults(){const scroller=document.getElementById('catalogMain'),grid=document.getElementById('grid');if(!scroller||!grid)return;scroller.scrollTo({top:Math.max(grid.offsetTop-24,0),behavior:'smooth'})}
@@ -573,7 +590,7 @@ async function init(){
   initKeyboardScroll(); // ativa scroll por teclado
   // Abre produto via link compartilhado (?p=slug)
   const _pSlug=new URLSearchParams(window.location.search).get('p');
-  if(_pSlug){const _idx=products.findIndex(p=>slugify(p.nome)===_pSlug);if(_idx>=0)openModal(_idx)}
+  if(_pSlug){const _idx=products.findIndex(p=>slugify(p.nome)===_pSlug);if(_idx>=0){updateOgTags(products[_idx]);openModal(_idx)}}
 }
 
 window.addEventListener('load',updateSearchPanelMetrics);

@@ -258,8 +258,8 @@ header{
   height:100%;
   display:block;
 }
-.search-panel-wrap{position:absolute;top:calc(100% + .8rem);right:0;width:min(460px,calc(100vw - 4.8rem));overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,245,242,.98));border:1px solid rgba(0,66,98,.1);border-radius:24px;box-shadow:0 24px 44px rgba(0,34,54,.18);max-height:0;opacity:0;transform:translateY(-8px);pointer-events:none;transition:max-height .32s var(--ease),opacity .24s var(--ease),transform .24s var(--ease)}
-.search-shell.open .search-panel-wrap{max-height:520px;opacity:1;transform:translateY(0);pointer-events:auto}
+.search-panel-wrap{position:absolute;top:calc(100% + .8rem);right:0;width:min(460px,calc(100vw - 4.8rem));overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(248,245,242,.98));border:1px solid rgba(0,66,98,.1);border-radius:24px;box-shadow:0 24px 44px rgba(0,34,54,.18);max-height:0;opacity:0;pointer-events:none;transition:none}
+.search-shell.open .search-panel-wrap{max-height:520px;opacity:1;pointer-events:auto}
 .search-panel{padding:1.15rem 1.15rem 1.2rem;display:grid;gap:.9rem;overflow-y:auto;max-height:inherit}
 .s-label{font-family:var(--font-body);font-size:.56rem;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:var(--nude-light);display:block;margin-bottom:.3rem}
 .search-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem}
@@ -570,7 +570,7 @@ body.search-results-mode .section-header{
 }
 
 .hero-decant.is-overlapping .hero-decant-sticky{
-  z-index:260;
+  z-index:2;
 }
 
 .hero-decant.is-overlapping .hero-copy{
@@ -856,11 +856,10 @@ body.search-results-mode .section-header{
     max-height:0;
     opacity:0;
     overflow:hidden;
-    transform:translateY(-10px);
     pointer-events:none;
-    transition:max-height .32s var(--ease),opacity .24s var(--ease),transform .24s var(--ease);
+    transition:none;
   }
-  .search-shell.open .search-panel-wrap{max-height:520px;opacity:1;transform:translateY(0);pointer-events:auto}
+  .search-shell.open .search-panel-wrap{max-height:520px;opacity:1;pointer-events:auto}
   .search-panel{padding:1rem .95rem 1.05rem;gap:.9rem}
   .search-bar{grid-template-columns:1fr}
   .search-bar input,
